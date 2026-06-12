@@ -1,0 +1,19 @@
+{
+  "statusLine": {
+    "type": "command",
+    "command": "bash /Users/hoshi/.claude/statusline-command.sh"
+  },
+  "enabledPlugins": {
+    "voltagent-biz@voltagent-subagents": true,
+    "voltagent-research@voltagent-subagents": true,
+    "voltagent-meta@voltagent-subagents": true
+  },
+  "extraKnownMarketplaces": {
+    "voltagent-subagents": {
+      "source": {
+        "source": "github",
+        "repo": "VoltAgent/awesome-claude-code-subagents"
+      }
+    }
+  }
+}
