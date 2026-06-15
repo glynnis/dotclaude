@@ -11,6 +11,7 @@ This is personal config, and it's going to reflect my preferences, workflows, an
 - **CLAUDE.md** — the top-level instructions Claude always has in context: communication style, behavior, etc.
 - **[rules/](rules/README.md)** — more detailed rules, also always loaded: honesty, self-improvement, writing style, etc.
 - **[skills/](skills/README.md)** — invokable skills that extend Claude's capabilities for specific tasks
+- **[agents/](agents/README.md)** — custom subagent configurations
 - **settings.json** — Claude Code settings
 
 ## Prerequisites
