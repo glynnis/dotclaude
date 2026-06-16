@@ -24,3 +24,4 @@ This is personal config, and it's going to reflect my preferences, workflows, an
 - [softaworks/agent-toolkit](https://github.com/softaworks/agent-toolkit) — several agents and skills adapted from here
 - [VoltAgent/awesome-claude-code-subagents](https://github.com/VoltAgent/awesome-claude-code-subagents) — source for many of the agents
 - [fredrik-hansen](https://github.com/fredrik-hansen/fredrik-hansen/blob/main/HONESTY_RULES.md) — the honesty rules started here
+- [alima-max/prototype-to-figma-skill](https://github.com/alima-max/prototype-to-figma-skill) — source for the `prototype-to-figma` skill

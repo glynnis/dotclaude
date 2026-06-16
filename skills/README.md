@@ -37,3 +37,7 @@ Skills load on demand; rules load eagerly. Procedural workflows with their own s
 **`session-handoff`** — Creates handoff documents for transferring context between sessions. Also handles resuming from a handoff. Proactively suggested after substantial work or when context is running low. Auto-invokes `session-doc` after confirming a handoff when the project declares a session-docs destination.
 
 **`session-doc`** — Produces a narrative session document for a human re-reader weeks later: why this session happened, what was done, inline decisions worth re-examining, lessons, and suggested next moves. Paired with `session-handoff` (the mechanical resume artifact), not collapsed with it — their audiences and shapes differ. Auto-fires alongside `session-handoff` when the project's `CLAUDE.md` declares a `## Session docs` destination.
+
+## Design
+
+**`prototype-to-figma`** — Converts a working prototype into a structured Figma file: explodes each interaction flow into separate frames, uses the target file's design system components, and annotates interaction details natively in Figma. Use when making a prototype reviewable by cross-functional partners or generating design specs from code. Adapted from [alima-max/prototype-to-figma-skill](https://github.com/alima-max/prototype-to-figma-skill).
