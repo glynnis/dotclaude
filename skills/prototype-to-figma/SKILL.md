@@ -130,6 +130,16 @@ URL is given, call `whoami` then `create_new_file` — never block on a missing 
 **Route:** Write tools available → Phases 1–6. Write tools unavailable → Phases 1–3, then
 [Prototype Spec Document](#prototype-spec-document--inspect-only-output).
 
+**Design-system source — clarify before anything else.** Establish *where the design system
+lives*, because everything downstream depends on it. Run `get_libraries(fileKey)` and read the
+result: `libraries_added_to_file` non-empty → the DS is one or more **published libraries**;
+empty → the DS is almost certainly **local to this file**. Don't infer silently — confirm with the
+user in one line: "Is the design system this should conform to in this same file, or a separate
+library?" If they name a different file/library than the one you're writing into, get that
+reference now. Getting this wrong sends you down the published-library search path when the assets
+are local (or vice-versa) and produces a false "no DS match." See Phase 2 for how each case is
+introspected.
+
 ---
 
 ### Phase 1a: Analyze the prototype
@@ -163,13 +173,96 @@ For 3+ flows, present a categorized flow list with state counts, ask "which flow
 detail (happy path / all states)?", and wait for a reply before proceeding. Confirm the
 interpretation explicitly before starting Phase 2.
 
+**Ask permission to ingest the design system up front — then build token-conformant on the first
+pass.** Before building, ask the user: "Can I read through the design system's variable
+collections — color, spacing/scale, typography — and its text styles first, so I build against
+the real tokens from the start?" This one-time read (Phase 2 covers the *how*: local introspection
+or published-library search) is far cheaper than building with raw hex / one-off text and then
+being re-prompted to retrofit tokens. With the inventory in hand, the first build should already:
+apply named **text styles** (matched by family + weight + nearest size), bind fills to **color
+variables** (prefer semantic tokens like `Foreground/…`, `Background/…` over raw primitives), and
+bind gaps/padding to the **spacing scale** — falling back to closest-match and flagging anything
+with no token (see "near-but-inexact" guidance in Phase 2). Building first and tokenizing later is
+a re-do, not a refinement: fold it into pass one.
+
 ---
 
 ### Phase 2: Map components to the design system
 
 For every component in the Phase 1a inventory, determine DS match or primitive.
 
-**Search strategy** (try in order before declaring "no match"):
+**First, determine where the design system lives.** `search_design_system` only returns assets
+from *published* libraries. When the target file **is** the design system — or holds its DS
+locally (unpublished) — `search_design_system` returns nothing from it (often surfacing other
+orgs' libraries instead), and a naive read concludes "no DS match" when the components and tokens
+are right there in the file. Before declaring any absence:
+
+1. Call `get_libraries(fileKey)`. If `libraries_added_to_file` is empty, the DS is almost
+   certainly **local** to the target file — introspect it directly with `use_figma` (read-only):
+   - Components: `figma.root.findAllWithCriteria({ types: ['COMPONENT_SET','COMPONENT'] })` and
+     **filter by name** (button, input, field, select, checkbox, toggle, badge, chip, avatar,
+     progress, etc.). Do not judge from the first N results — a big DS may list utility sets
+     first; search the whole list by name.
+   - Variables: `getLocalVariableCollectionsAsync()`, then resolve each variable **in every mode**
+     (collections often have CRM/Application/Light/Dark modes — sampling only mode[0] misreads
+     values). Inspect semantic collections (e.g. "Brand", "Semantic Color") **by name** for
+     `Primary`/`Accent`/etc., not just raw primitive ramps by nearest-hex.
+   - Local components are instantiated with `node.createInstance()` (you already have the node);
+     local variables bind via `figma.variables.setBoundVariableForPaint` without importing.
+2. A near-but-inexact color match is normal and expected: the prototype's hardcoded hex rarely
+   equals the DS token exactly. Binding to the DS token (a small, deliberate recolor toward the
+   real brand) is usually the *point* of building against a DS — prefer it over raw hex, and note
+   the shift. Reserve raw hex + DS Drift for when no semantic token plays that role at all.
+3. **Verify the DS components' fonts are installed before committing to component reuse.**
+   DS components carry text in the DS's own typeface; `createInstance()` + `setProperties` (and
+   even appending an instance) require those fonts loaded via `loadFontAsync`, which throws if the
+   font is absent from the environment. Check with `listAvailableFontsAsync()` (or a guarded
+   `loadFontAsync`) up front. If the fonts are missing, **component reuse is blocked** — you can
+   still bind color/spacing *variables* (no font dependency), but instances and their text will
+   fail. Report the blocker and fall back to primitives + token binding rather than producing
+   broken missing-font instances. The prototype's own fonts being available is irrelevant here —
+   what matters is whether the *DS components'* fonts are.
+
+   **Common cause when a DS font is "installed" but still won't load: Adobe Creative Cloud.**
+   Licensed faces (e.g. Gotham, Unity Display, Proxima Nova) are frequently activated through
+   Adobe Creative Cloud rather than installed as files. CC "activated" fonts are not always
+   written to disk as real font files, and the Figma desktop app enumerates installed *system*
+   font files — so a CC-activated face often does not appear in `listAvailableFontsAsync()` even
+   though the user "has" it, and a Figma restart alone won't surface it. The fix is on the user's
+   side: have Creative Cloud install the actual font files locally (its install-to-system option),
+   then restart Figma. If `listAvailableFontsAsync()` shows 1000+ families but the specific DS
+   face is absent with no fuzzy-name match, suspect this before assuming the font is unlicensed or
+   misnamed — surface it as the likely explanation rather than re-checking indefinitely.
+
+   **Rule out a deeper cause first: the MCP context may not read local fonts at all.** Before
+   sending the user down the Adobe-CC / local-install path, test whether the execution context
+   even exposes their machine's fonts. Check `listAvailableFontsAsync()` for a font that is
+   *guaranteed local-only* on their OS but absent from Google Fonts — on macOS, `Helvetica Neue`,
+   `Menlo`, `Avenir`, `Monaco`. If those are **missing too**, the MCP is running in a remote/
+   headless context that only exposes Figma-**hosted** fonts (Google Fonts + a small hosted set),
+   not the user's local fonts — so **no local install will ever help**, and commercial DS faces
+   (Gotham, Unity Display, Proxima Nova, etc.) are simply unusable in that context. This is
+   distinct from the Adobe-CC case (where the font is genuinely missing from disk). Don't loop the
+   user through reinstalls and restarts when the context itself is the wall — say so, and pivot to
+   what *is* possible there: bind color/spacing/radius **variables** (font-independent) and build
+   primitives in a Figma-hosted font, deferring true component reuse to an environment whose Figma
+   can see the licensed fonts.
+
+   **If a second, local Figma MCP/bridge is connected, prefer it for DS-component work.** A
+   remote/headless Figma MCP exposes only hosted fonts; a *local desktop bridge* (e.g. a
+   Figma-desktop plugin MCP) runs inside the user's app and sees their installed fonts — including
+   licensed DS faces — so component instantiation that's impossible on the remote MCP succeeds on
+   the local one. When `listAvailableFontsAsync()` shows ~2000+ families *and* local-only fonts
+   like Helvetica Neue, you're on a context that can do real component builds. Use it.
+
+   **Verify each weight renders upright — don't trust the style name.** A named cut (e.g.
+   `Gotham / Medium`) can resolve to an *oblique/italic* file on a given machine, so text set in it
+   comes out slanted even though no error is thrown and `fontName.style` reads "Medium". After the
+   first build, screenshot and eyeball the weights; if one is unexpectedly italic, switch to a
+   sibling weight that renders upright (e.g. Book for regular, Bold for emphasis) rather than
+   fighting the bad cut.
+
+**Search strategy** (published-library files; try in order before declaring "no match"):
 1. `search_design_system(fileKey, query="ComponentName", includeComponents=true)`
 2. Try alternate names: Alert/Banner/Toast/Notification, Dropdown/Select/Menu, Tag/Chip/Badge, etc.
 3. Search by visual category: "input", "navigation", "feedback", "card"
