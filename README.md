@@ -1,6 +1,6 @@
 # dotclaude
 
-Glynnis's [Claude] config.
+Glynnis's Claude config.
 
 ## Consideration
 
@@ -20,6 +20,7 @@ This is personal config, and it's going to reflect my preferences, workflows, an
 
 ## Appreciation
 
+- [Claude Usage Tracker](https://github.com/hamed-elfayome/Claude-Usage-Tracker) — what I rely on to track usage, peak hours, etc. Highly recommend.
 - [Yossef's dotclaude repo](https://github.com/ymendel/dotclaude) - where I got the idea for the symlink setup + a few skills (especially *The Elements of Style* Strunk & White -inspired skill)
 - [softaworks/agent-toolkit](https://github.com/softaworks/agent-toolkit) — several agents and skills adapted from here
 - [VoltAgent/awesome-claude-code-subagents](https://github.com/VoltAgent/awesome-claude-code-subagents) — source for many of the agents
