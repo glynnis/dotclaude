@@ -1,7 +1,7 @@
 {
   "statusLine": {
     "type": "command",
-    "command": "bash /Users/hoshi/.claude/statusline-command.sh"
+    "command": "bash /Users/tendi/.claude/statusline-command.sh"
   },
   "enabledPlugins": {
     "voltagent-biz@voltagent-subagents": true,
@@ -13,6 +13,12 @@
       "source": {
         "source": "github",
         "repo": "VoltAgent/awesome-claude-code-subagents"
+      }
+    },
+    "tsipotu-skills": {
+      "source": {
+        "source": "github",
+        "repo": "tsipotU/gherkin-skill"
       }
     }
   }
