@@ -16,6 +16,8 @@ Skills load on demand; rules load eagerly. Procedural workflows with their own s
 
 **`crafting-effective-readmes`** — Use when writing or improving README files. Not all READMEs are the same — provides templates and guidance matched to your audience and project type.
 
+**`gherkin`** — Creates and manages Gherkin feature specifications (`.feature` files) following the Cucumber BDD standard. Asks a few targeted questions before proposing a scenario checklist, scans for existing scenarios to catch behavioral duplicates and match project style, then presents the file for review before writing. Reference files cover syntax, best practices, anti-patterns, and file organization. Source: [tsipotU/gherkin-skill](https://github.com/tsipotU/gherkin-skill).
+
 ## Dialogue & focus
 
 **`grill-me`** — Interviews the user relentlessly about a plan or design until reaching shared understanding, resolving each branch of the decision tree. Use when stress-testing a plan or design.
